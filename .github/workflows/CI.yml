@@ -1,0 +1,46 @@
+name: Build and Run in Docker
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-run-docker:
+    runs-on: ubuntu-latest
+    name: Build Docker image and run build inside container
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Docker dependencies (if needed)
+        if: ${{ false }}
+        run: |
+          sudo apt update
+          sudo apt install -y g++ cmake git libfmt-dev
+
+      - name: Build Docker image
+        run: |
+          docker build -t logger .
+          docker images
+
+      - name: Create logs directory and run container
+        run: |
+          mkdir -p logs
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger
+
+      - name: Check log file
+        run: |
+          cat logs/log.txt || echo "No log file found"
+
+      - name: Upload log as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-log
+          path: logs/log.txt
+          retention-days: 3
