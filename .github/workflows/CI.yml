@@ -13,27 +13,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Prepare environment
+      - name: Prepare logs directory
         run: |
           mkdir -p logs
-          sudo chmod -R 777 logs 
+          chmod -R 777 logs
 
       - name: Build Docker image
         run: docker build -t logger .
 
-      - name: Run container and get logs
+      - name: Run container to build project
         run: |
-          docker run --rm -v "$(pwd)/logs:/home/logs" logger || echo "Container executed"
-          sudo chmod -R 755 logs  
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger
+          ls -la logs/
 
       - name: Verify logs
         run: |
-          ls -la logs/
-          [ -f "logs/log.txt" ] && echo "Log content:" && cat logs/log.txt || echo "No log file found"
+          echo "=== BUILD LOG ==="
+          cat logs/build.log || echo "No build log found"
+
+          echo -e "\n=== APP RUN LOG ==="
+          cat logs/app_run.log || echo "No app log found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: logs/
+          path: |
+            logs/build.log
+            logs/app_run.log
           retention-days: 7
