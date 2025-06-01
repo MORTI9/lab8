@@ -1,4 +1,4 @@
-name: Build and Run in Docker
+name: Build in Docker and upload log
 
 on:
   push:
@@ -7,10 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-run-docker:
+  build-docker:
     runs-on: ubuntu-latest
-    name: Build Docker image and run build inside container
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,15 +21,14 @@ jobs:
           docker build -t logger .
           docker images
 
-      - name: Create logs directory and run container
+      - name: Run container and extract logs
         run: |
           mkdir -p logs
           docker run --rm -v "$(pwd)/logs:/home/logs" logger
-          cat logs/log.txt || echo "No log file generated"
+          cat logs/log.txt
 
-      - name: Upload log as artifact
+      - name: Upload log file
         uses: actions/upload-artifact@v3
         with:
           name: build-log
           path: logs/log.txt
-          retention-days: 3
