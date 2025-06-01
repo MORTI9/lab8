@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-log:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,21 +25,23 @@ jobs:
 
       - name: Prepare combined log
         run: |
-          echo "=== SYSTEM INFO ===" > combined.log
-          echo "Date: $(date)" >> combined.log
-          echo "CPU: $(nproc) cores" >> combined.log
-
-          echo -e "\n=== BUILD LOG ===" >> combined.log
-          cat logs/build.log >> combined.log 2>/dev/null || echo "Build log not found" >> combined.log
+          echo "=== BUILD LOG ===" > combined.log
+          cat logs/build.log >> combined.log
 
           echo -e "\n=== APP LOG ===" >> combined.log
-          cat logs/app_run.log >> combined.log 2>/dev/null || echo "App log not found" >> combined.log
+          cat logs/log.txt >> combined.log
+
+          echo -e "\n=== APP RUN LOG ===" >> combined.log
+          cat logs/app_run.log >> combined.log
+
+          echo -e "\n=== DIR STRUCTURE ===" >> combined.log
+          ls -R build >> combined.log
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            combined.log
             logs/
+            combined.log
           retention-days: 7
