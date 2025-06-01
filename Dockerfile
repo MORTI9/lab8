@@ -1,10 +1,7 @@
-
 FROM ubuntu:22.04
-
 
 RUN apt update && \
     apt install -y --no-install-recommends g++ cmake git libfmt-dev make
-
 
 WORKDIR /app
 
@@ -20,7 +17,6 @@ RUN mkdir -p build && \
 
 ENV LOG_PATH /home/logs/log.txt
 RUN mkdir -p /home/logs
-
 
 RUN cd build && cp -r * /home/logs/
 
