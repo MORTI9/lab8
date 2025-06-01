@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-log:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,29 +15,24 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t logger .
-          mkdir -p logs
-          
-      - name: Run container and get logs
+
+      - name: Create logs directory and run container
         run: |
-          docker run --rm -v "$(pwd)/logs:/home/logs" logger || echo "Container executed"
-          
-          
-          touch logs/build.log logs/log.txt
+          mkdir -p logs
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger
+          ls -la logs/  # Проверяем, что файлы созданы
 
       - name: Prepare combined log
         run: |
           echo "=== SYSTEM INFO ===" > combined.log
           echo "Date: $(date)" >> combined.log
           echo "CPU: $(nproc) cores" >> combined.log
-          
+
           echo -e "\n=== BUILD LOG ===" >> combined.log
-          [ -f "logs/build.log" ] && cat logs/build.log >> combined.log || echo "Build log not found" >> combined.log
-          
+          cat logs/build.log >> combined.log 2>/dev/null || echo "Build log not found" >> combined.log
+
           echo -e "\n=== APP LOG ===" >> combined.log
-          [ -f "logs/log.txt" ] && cat logs/log.txt >> combined.log || echo "App log not found" >> combined.log
-          
-          echo -e "\n=== BUILD ARTIFACTS ===" >> combined.log
-          ls -R build/ >> combined.log 2>&1 || echo "No build directory" >> combined.log
+          cat logs/app_run.log >> combined.log 2>/dev/null || echo "App log not found" >> combined.log
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -46,6 +40,5 @@ jobs:
           name: build-artifacts
           path: |
             combined.log
-            logs/build.log
-            logs/log.txt
+            logs/
           retention-days: 7
