@@ -4,15 +4,15 @@ RUN apt update && \
     apt install -y --no-install-recommends g++ cmake git libfmt-dev make
 
 WORKDIR /app
-
 COPY . .
 
-RUN mkdir -p build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-std=c++20 -fconcepts" .. && \
-    cmake --build . --target all --parallel $(nproc) 2>&1 | tee /home/logs/build.log
+RUN mkdir -p /home/logs && chmod 777 /home/logs && \
+    { cmake -B build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build; } 2>&1 | tee /home/logs/build.log
 
 
-RUN mkdir -p /home/logs && \
-    echo "Build completed at $(date)" > /home/logs/log.txt && \
-    echo "Application started at $(date)" > /home/logs/app_run.log
+RUN touch /home/logs/log.txt && chmod 666 /home/logs/log.txt
+
+VOLUME /home/logs
+
+CMD ["sh", "-c", "echo 'Application started' > /home/logs/log.txt && ./build/hello_world_application/hello_world"]
