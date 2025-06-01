@@ -27,9 +27,6 @@ jobs:
         run: |
           mkdir -p logs
           docker run --rm -v "$(pwd)/logs:/home/logs" logger
-
-      - name: Check log file
-        run: |
           cat logs/log.txt || echo "No log file generated"
 
       - name: Upload log as artifact
