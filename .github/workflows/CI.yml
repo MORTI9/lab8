@@ -13,18 +13,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and run Docker
+      - name: Build Docker image
         run: |
-          docker build -t logger . 
+          docker build -t logger .
+
+      - name: Run Docker container and extract logs
+        run: |
           mkdir -p logs
           docker run --rm -v "$(pwd)/logs:/home/logs" logger
 
-      - name: Save build logs
+          
+          docker create --name temp_container logger
+          docker cp temp_container:/app/logs ./logs_from_container
+          docker rm temp_container
+
+      - name: Save combined log
         run: |
           echo "=== BUILD LOG ===" > combined.log
-          cat logs/build.log >> combined.log
+          cat ./logs_from_container/build.log >> combined.log
+
           echo -e "\n=== APP LOG ===" >> combined.log
-          cat logs/log.txt >> combined.log
+          cat ./logs_from_container/app_run.txt >> combined.log
+
           echo -e "\n=== DIR STRUCTURE ===" >> combined.log
           ls -R build >> combined.log
 
@@ -34,6 +44,5 @@ jobs:
           name: build-artifacts
           path: |
             combined.log
-            logs/build.log
-            logs/log.txt
+            logs_from_container/
           retention-days: 7
