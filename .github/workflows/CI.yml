@@ -1,4 +1,4 @@
-name: Build project in Docker
+name: Build and Run in Docker
 
 on:
   push:
@@ -7,25 +7,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-docker:
+  build-run-docker:
     runs-on: ubuntu-latest
+    name: Build Docker image and run build inside container
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v3
+
 
       - name: Build Docker image
         run: |
           docker build -t logger .
           docker images
 
-      - name: Run container to generate artifacts
+      - name: Create logs directory and run container
         run: |
           mkdir -p logs
-          docker run --rm -v "$(pwd)/logs:/home/logs" logger
-          cat logs/log.txt || echo "No log file generated"
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger || echo "Container executed"
+
+      - name: Verify log file
+        run: |
+          if [ -f "logs/log.txt" ]; then
+            echo "Log file content:"
+            cat logs/log.txt
+          else
+            echo "Error: Log file not found!" >&2
+            exit 1
+          fi
 
       - name: Upload log as artifact
         uses: actions/upload-artifact@v4
@@ -33,3 +49,8 @@ jobs:
           name: build-log
           path: logs/log.txt
           retention-days: 3
+
+      - name: Push Docker image
+        run: |
+          docker tag logger ${{ secrets.DOCKER_HUB_USERNAME }}/logger:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/logger:latest
