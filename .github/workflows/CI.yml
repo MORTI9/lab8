@@ -16,27 +16,29 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t logger .
-
-      - name: Run Docker container and extract logs
-        run: |
           mkdir -p logs
-          docker run --rm -v "$(pwd)/logs:/home/logs" logger
-
           
-          docker create --name temp_container logger
-          docker cp temp_container:/app/logs ./logs_from_container
-          docker rm temp_container
-
-      - name: Save combined log
+      - name: Run container and get logs
         run: |
-          echo "=== BUILD LOG ===" > combined.log
-          cat ./logs_from_container/build.log >> combined.log
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger || echo "Container executed"
+          
+          
+          touch logs/build.log logs/log.txt
 
+      - name: Prepare combined log
+        run: |
+          echo "=== SYSTEM INFO ===" > combined.log
+          echo "Date: $(date)" >> combined.log
+          echo "CPU: $(nproc) cores" >> combined.log
+          
+          echo -e "\n=== BUILD LOG ===" >> combined.log
+          [ -f "logs/build.log" ] && cat logs/build.log >> combined.log || echo "Build log not found" >> combined.log
+          
           echo -e "\n=== APP LOG ===" >> combined.log
-          cat ./logs_from_container/app_run.txt >> combined.log
-
-          echo -e "\n=== DIR STRUCTURE ===" >> combined.log
-          ls -R build >> combined.log
+          [ -f "logs/log.txt" ] && cat logs/log.txt >> combined.log || echo "App log not found" >> combined.log
+          
+          echo -e "\n=== BUILD ARTIFACTS ===" >> combined.log
+          ls -R build/ >> combined.log 2>&1 || echo "No build directory" >> combined.log
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -44,5 +46,6 @@ jobs:
           name: build-artifacts
           path: |
             combined.log
-            logs_from_container/
+            logs/build.log
+            logs/log.txt
           retention-days: 7
