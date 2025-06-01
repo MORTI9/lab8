@@ -1,7 +1,13 @@
 FROM ubuntu:22.04
 
+
 RUN apt update && \
-    apt install -y --no-install-recommends g++ cmake git libfmt-dev make
+    apt install -y --no-install-recommends \
+    g++ \
+    cmake \
+    git \
+    libfmt-dev \
+    make
 
 WORKDIR /app
 
@@ -12,12 +18,10 @@ COPY . .
 RUN mkdir -p build && \
     cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    cmake --build . --target all --parallel $(nproc)
+    cmake --build . --parallel $(nproc)
 
 
-ENV LOG_PATH /home/logs/log.txt
-RUN mkdir -p /home/logs
+ENV LOG_PATH=/home/logs/log.txt
+VOLUME /home/logs
 
-RUN cd build && cp -r * /home/logs/
-
-CMD ["echo", "Build completed. Artifacts are in /home/logs"]
+CMD ["sh", "-c", "mkdir -p /home/logs && echo 'Test log message' > $LOG_PATH && ./build/hello_world_application/hello_world"]

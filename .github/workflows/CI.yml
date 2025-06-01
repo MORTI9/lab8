@@ -22,7 +22,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-
       - name: Build Docker image
         run: |
           docker build -t logger .
@@ -35,9 +34,11 @@ jobs:
 
       - name: Verify log file
         run: |
+          ls -la logs/  # Для отладки
           if [ -f "logs/log.txt" ]; then
-            echo "Log file content:"
+            echo "=== LOG CONTENT ==="
             cat logs/log.txt
+            echo "==================="
           else
             echo "Error: Log file not found!" >&2
             exit 1
@@ -49,8 +50,3 @@ jobs:
           name: build-log
           path: logs/log.txt
           retention-days: 3
-
-      - name: Push Docker image
-        run: |
-          docker tag logger ${{ secrets.DOCKER_HUB_USERNAME }}/logger:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/logger:latest
