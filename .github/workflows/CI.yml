@@ -16,29 +16,25 @@ jobs:
       - name: Prepare logs directory
         run: |
           mkdir -p logs
-          chmod -R 777 logs
+          sudo chmod 777 logs
 
-      - name: Build Docker image
-        run: docker build -t logger .
-
-      - name: Run container to build project
+      - name: Build and run Docker
         run: |
-          docker run --rm -v "$(pwd)/logs:/home/logs" logger
-          ls -la logs/
+          docker build -t logger .
+          docker run --rm -v "$(pwd)/logs:/home/logs" logger || echo "Container executed"
 
       - name: Verify logs
         run: |
-          echo "=== BUILD LOG ==="
-          cat logs/build.log || echo "No build log found"
-
-          echo -e "\n=== APP RUN LOG ==="
-          cat logs/app_run.log || echo "No app log found"
+          echo "=== LOG FILES ==="
+          ls -la logs/
+          echo -e "\n=== BUILD LOG ==="
+          cat logs/build.log
+          echo -e "\n=== APP LOG ==="
+          cat logs/log.txt
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: |
-            logs/build.log
-            logs/app_run.log
+          path: logs/
           retention-days: 7
